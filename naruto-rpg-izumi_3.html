@@ -915,6 +915,20 @@ body::before {
 </div>
 
 <script>
+// Early definitions needed by inline HTML onclick handlers
+function applyKey() {
+  const val = document.getElementById('apiKey').value.trim();
+  if (!val) { alert('Please paste your API key first.'); return; }
+  localStorage.setItem('izumi_apikey', val);
+  if (typeof updateSendBtn === 'function') updateSendBtn();
+  const sb = document.getElementById('startBtn');
+  if (sb) sb.disabled = false;
+  const btn = document.querySelector('button[onclick="applyKey()"]');
+  if (btn) { btn.textContent = '✓ Key Saved'; setTimeout(() => { btn.textContent = 'Apply Key'; }, 1500); }
+}
+</script>
+
+<script>
 // ═══════════════════════════════════════════════════════════
 // WORLD STATE
 // ═══════════════════════════════════════════════════════════
@@ -1762,18 +1776,6 @@ function updateSendBtn() {
 function getAPIKey() {
   const fieldVal = document.getElementById('apiKey').value.trim();
   return fieldVal || localStorage.getItem('izumi_apikey') || '';
-}
-
-function applyKey() {
-  const val = document.getElementById('apiKey').value.trim();
-  if (!val) { alert('Please paste your API key first.'); return; }
-  localStorage.setItem('izumi_apikey', val);
-  updateSendBtn();
-  const sb = document.getElementById('startBtn');
-  if (sb) { sb.disabled = false; }
-  // Visual feedback
-  const btn = document.querySelector('button[onclick="applyKey()"]');
-  if (btn) { btn.textContent = '✓ Key Saved'; setTimeout(() => { btn.textContent = 'Apply Key'; }, 1500); }
 }
 
 // ═══════════════════════════════════════════════════════════
