@@ -1,0 +1,1832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Izumi's Chronicle — Naruto RPG</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #080604;
+  --ink2: #100c08;
+  --ink3: #181210;
+  --parchment: #f0e4cc;
+  --parchment2: #e8d8b8;
+  --orange: #c84a08;
+  --orange2: #e05a10;
+  --gold: #b87820;
+  --gold2: #d4982a;
+  --gold3: #f0c060;
+  --teal: #1a6060;
+  --teal2: #228888;
+  --red-dark: #6a1010;
+  --blue-dark: #0e1a30;
+  --text: #e8dcc8;
+  --text-mid: #907860;
+  --text-dim: #504030;
+  --border: rgba(180,130,40,0.2);
+  --border2: rgba(180,130,40,0.4);
+  --shadow: rgba(0,0,0,0.8);
+
+  /* Character colors */
+  --c-kakashi: #8899aa;
+  --c-naruto: #e07010;
+  --c-sasuke: #6655cc;
+  --c-izumi: #22a0a0;
+  --c-narrator: #c0a060;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family:'Crimson Pro',serif;
+  background:var(--ink);
+  color:var(--text);
+  height:100vh;
+  overflow:hidden;
+}
+
+/* Subtle noise texture */
+body::before {
+  content:'';
+  position:fixed;
+  inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events:none;
+  z-index:999;
+  opacity:0.5;
+}
+
+/* ── LAYOUT ── */
+.app {
+  display:grid;
+  grid-template-columns:270px 1fr;
+  grid-template-rows:52px 1fr;
+  height:100vh;
+}
+
+/* ── HEADER ── */
+.header {
+  grid-column:1/-1;
+  display:flex;
+  align-items:center;
+  padding:0 18px;
+  background:rgba(8,6,4,0.98);
+  border-bottom:1px solid var(--border);
+  gap:12px;
+  position:relative;
+  z-index:10;
+}
+
+.header::after {
+  content:'';
+  position:absolute;
+  bottom:-1px; left:0; right:0; height:1px;
+  background:linear-gradient(90deg,transparent 0%,var(--gold) 30%,var(--gold3) 50%,var(--gold) 70%,transparent 100%);
+  animation:shimmer 6s ease-in-out infinite;
+}
+
+@keyframes shimmer { 0%,100%{opacity:.25} 50%{opacity:.8} }
+
+.logo {
+  font-family:'Cinzel',serif;
+  font-size:14px;
+  font-weight:700;
+  letter-spacing:5px;
+  color:var(--gold3);
+  text-transform:uppercase;
+  white-space:nowrap;
+}
+
+.logo span { color:var(--orange2); }
+
+.header-divider {
+  width:1px; height:24px;
+  background:var(--border2);
+  flex-shrink:0;
+}
+
+.arc-label {
+  font-family:'Share Tech Mono',monospace;
+  font-size:9px;
+  letter-spacing:2.5px;
+  color:var(--text-mid);
+  text-transform:uppercase;
+  white-space:nowrap;
+}
+
+.header-chars {
+  margin-left:auto;
+  display:flex;
+  gap:7px;
+  align-items:center;
+}
+
+.hchar {
+  display:flex;
+  align-items:center;
+  gap:5px;
+  padding:3px 8px;
+  border:1px solid;
+  border-radius:2px;
+  font-family:'Share Tech Mono',monospace;
+  font-size:9px;
+  letter-spacing:1px;
+  text-transform:uppercase;
+  transition:all .3s;
+}
+
+.hchar.present { opacity:1; }
+.hchar.absent { opacity:.2; filter:grayscale(1); }
+
+.hchar-dot {
+  width:5px; height:5px;
+  border-radius:50%;
+  background:currentColor;
+  animation:pulse-dot 2s ease-in-out infinite;
+}
+
+@keyframes pulse-dot { 0%,100%{opacity:.4} 50%{opacity:1} }
+
+/* ── SIDEBAR ── */
+.sidebar {
+  background:rgba(8,6,4,0.97);
+  border-right:1px solid var(--border);
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+
+.sidebar-body {
+  flex:1;
+  overflow-y:auto;
+  padding:14px 0 8px;
+}
+
+.sidebar-body::-webkit-scrollbar { width:3px; }
+.sidebar-body::-webkit-scrollbar-thumb { background:var(--border2); }
+
+.s-section {
+  padding:5px 14px 3px;
+  font-family:'Share Tech Mono',monospace;
+  font-size:8px;
+  letter-spacing:2.5px;
+  color:var(--text-dim);
+  text-transform:uppercase;
+  margin-bottom:3px;
+}
+
+/* ── PLAYER CARD ── */
+.player-card {
+  margin:0 10px 10px;
+  padding:10px 12px;
+  background:rgba(26,96,96,0.1);
+  border:1px solid rgba(34,136,136,0.25);
+  border-left:3px solid var(--teal2);
+  border-radius:2px;
+}
+
+.player-name-row {
+  display:flex;
+  align-items:baseline;
+  gap:8px;
+  margin-bottom:5px;
+}
+
+.player-name {
+  font-family:'Cinzel',serif;
+  font-size:15px;
+  font-weight:700;
+  color:var(--teal2);
+  letter-spacing:1.5px;
+}
+
+.player-rank {
+  font-family:'Share Tech Mono',monospace;
+  font-size:9px;
+  color:var(--text-mid);
+  letter-spacing:1px;
+}
+
+.stat-row {
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+  margin-top:5px;
+}
+
+.stat {
+  display:flex;
+  align-items:center;
+  gap:7px;
+}
+
+.stat-name {
+  font-family:'Share Tech Mono',monospace;
+  font-size:8px;
+  letter-spacing:1px;
+  color:var(--text-mid);
+  width:52px;
+  text-transform:uppercase;
+  flex-shrink:0;
+}
+
+.stat-bar {
+  flex:1;
+  height:3px;
+  background:rgba(255,255,255,0.06);
+  border-radius:2px;
+  overflow:hidden;
+}
+
+.stat-fill {
+  height:100%;
+  border-radius:2px;
+  transition:width .5s ease;
+}
+
+.stat-val {
+  font-family:'Share Tech Mono',monospace;
+  font-size:8px;
+  color:var(--text-mid);
+  width:18px;
+  text-align:right;
+  flex-shrink:0;
+}
+
+.affinity-row {
+  display:flex;
+  gap:4px;
+  margin-top:6px;
+  flex-wrap:wrap;
+}
+
+.affinity-tag {
+  font-size:8px;
+  font-family:'Share Tech Mono',monospace;
+  padding:1px 6px;
+  border-radius:2px;
+  border:1px solid;
+  letter-spacing:.5px;
+  transition:all .3s;
+}
+
+.affinity-tag.hidden {
+  opacity:.2;
+  filter:grayscale(1);
+}
+
+/* ── CHARACTER ROSTER ── */
+.char-entry {
+  padding:8px 12px;
+  display:flex;
+  gap:9px;
+  align-items:flex-start;
+  border-left:3px solid transparent;
+  transition:all .3s;
+  margin:1px 0;
+}
+
+.char-entry.present {
+  border-left-color:var(--char-c);
+  background:rgba(255,255,255,0.02);
+}
+
+.char-entry.absent {
+  opacity:.25;
+}
+
+.char-emoji {
+  width:32px; height:32px;
+  border-radius:3px;
+  border:1px solid var(--char-c);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:16px;
+  flex-shrink:0;
+  background:rgba(255,255,255,0.03);
+}
+
+.char-details { flex:1; min-width:0; }
+
+.char-dname {
+  font-family:'Cinzel',serif;
+  font-size:11px;
+  font-weight:600;
+  color:var(--char-c);
+  letter-spacing:.5px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.char-drole {
+  font-size:9px;
+  color:var(--text-dim);
+  font-family:'Share Tech Mono',monospace;
+  letter-spacing:.5px;
+  margin-top:1px;
+}
+
+.rep-row {
+  display:flex;
+  align-items:center;
+  gap:5px;
+  margin-top:4px;
+}
+
+.rep-label {
+  font-family:'Share Tech Mono',monospace;
+  font-size:7px;
+  color:var(--text-dim);
+  letter-spacing:.5px;
+  width:36px;
+  text-transform:uppercase;
+}
+
+.rep-bar {
+  flex:1;
+  height:2px;
+  background:rgba(255,255,255,0.05);
+  border-radius:1px;
+  overflow:hidden;
+}
+
+.rep-fill {
+  height:100%;
+  border-radius:1px;
+  background:var(--char-c);
+  transition:width .8s ease;
+}
+
+/* Scene info box */
+.scene-card {
+  margin:0 10px 10px;
+  padding:9px 11px;
+  background:rgba(180,130,40,0.05);
+  border:1px solid var(--border);
+  border-radius:2px;
+}
+
+.scene-card-label {
+  font-family:'Share Tech Mono',monospace;
+  font-size:8px;
+  letter-spacing:2px;
+  color:var(--text-dim);
+  text-transform:uppercase;
+  margin-bottom:4px;
+}
+
+.scene-card-text {
+  font-size:11px;
+  color:var(--text-mid);
+  line-height:1.55;
+  font-style:italic;
+}
+
+/* API */
+.api-wrap {
+  padding:10px 11px;
+  border-top:1px solid var(--border);
+  flex-shrink:0;
+}
+
+.api-wrap label {
+  display:block;
+  font-family:'Share Tech Mono',monospace;
+  font-size:8px;
+  letter-spacing:2px;
+  color:var(--text-dim);
+  text-transform:uppercase;
+  margin-bottom:5px;
+}
+
+.api-wrap input {
+  width:100%;
+  background:rgba(255,255,255,0.03);
+  border:1px solid var(--border);
+  border-radius:2px;
+  padding:5px 8px;
+  color:var(--parchment2);
+  font-size:10px;
+  font-family:'Share Tech Mono',monospace;
+  outline:none;
+  transition:border-color .2s;
+}
+
+.api-wrap input:focus { border-color:var(--gold2); }
+
+.api-wrap .hint {
+  font-size:8px;
+  color:var(--text-dim);
+  margin-top:4px;
+  line-height:1.6;
+  font-family:'Share Tech Mono',monospace;
+}
+
+.api-wrap .hint a { color:var(--orange2); text-decoration:none; }
+
+/* ── MAIN CONTENT ── */
+.main {
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  position:relative;
+  background:var(--ink2);
+}
+
+.main::before {
+  content:'忍';
+  position:absolute;
+  bottom:-40px; right:-40px;
+  font-size:380px;
+  color:rgba(180,130,40,0.02);
+  font-family:'Cinzel',serif;
+  pointer-events:none;
+  z-index:0;
+  line-height:1;
+}
+
+/* Scene banner */
+.scene-banner {
+  padding:8px 20px;
+  background:rgba(8,6,4,0.9);
+  border-bottom:1px solid var(--border);
+  flex-shrink:0;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  z-index:2;
+}
+
+.scene-title-main {
+  font-family:'Cinzel',serif;
+  font-size:12px;
+  font-weight:600;
+  color:var(--gold2);
+  letter-spacing:2px;
+}
+
+.scene-beat-label {
+  font-family:'Share Tech Mono',monospace;
+  font-size:9px;
+  color:var(--text-dim);
+  letter-spacing:1px;
+}
+
+.scene-separator {
+  color:var(--text-dim);
+  font-size:10px;
+}
+
+/* Messages */
+.messages {
+  flex:1;
+  overflow-y:auto;
+  padding:22px 26px;
+  display:flex;
+  flex-direction:column;
+  gap:0;
+  position:relative;
+  z-index:1;
+}
+
+.messages::-webkit-scrollbar { width:4px; }
+.messages::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+
+/* Welcome state */
+.welcome {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  height:100%;
+  text-align:center;
+  gap:12px;
+  opacity:.65;
+}
+
+.welcome-glyph {
+  font-size:64px;
+  animation:float 4s ease-in-out infinite;
+}
+
+@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+
+.welcome h2 {
+  font-family:'Cinzel',serif;
+  font-size:16px;
+  letter-spacing:5px;
+  color:var(--gold2);
+  text-transform:uppercase;
+}
+
+.welcome p {
+  font-size:13px;
+  color:var(--text-mid);
+  font-family:'Share Tech Mono',monospace;
+  max-width:380px;
+  line-height:1.9;
+  letter-spacing:.3px;
+}
+
+.start-btn {
+  margin-top:8px;
+  padding:9px 28px;
+  background:transparent;
+  border:1px solid var(--gold2);
+  color:var(--gold2);
+  font-family:'Cinzel',serif;
+  font-size:11px;
+  letter-spacing:3px;
+  text-transform:uppercase;
+  cursor:pointer;
+  transition:all .2s;
+  border-radius:2px;
+}
+
+.start-btn:hover {
+  background:rgba(180,130,40,0.1);
+  box-shadow:0 0 20px rgba(180,130,40,0.15);
+}
+
+.start-btn:disabled {
+  opacity:.3;
+  cursor:not-allowed;
+}
+
+/* ── MESSAGE BLOCKS ── */
+.msg-block {
+  margin-bottom:18px;
+  animation:fadeUp .3s ease-out;
+}
+
+@keyframes fadeUp {
+  from { opacity:0; transform:translateY(6px); }
+  to { opacity:1; transform:translateY(0); }
+}
+
+/* Narrator / scene description */
+.narrator-block {
+  padding:12px 16px;
+  background:rgba(180,130,40,0.04);
+  border-left:2px solid var(--gold);
+  border-radius:0 3px 3px 0;
+  margin-bottom:14px;
+}
+
+.narrator-text {
+  font-size:15px;
+  line-height:1.75;
+  color:var(--parchment2);
+  font-style:italic;
+  font-weight:300;
+}
+
+/* Character dialogue */
+.dialogue-block {
+  margin-bottom:10px;
+}
+
+.dialogue-speaker {
+  font-family:'Share Tech Mono',monospace;
+  font-size:9px;
+  letter-spacing:2.5px;
+  text-transform:uppercase;
+  margin-bottom:4px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.dialogue-speaker::after {
+  content:'';
+  flex:1;
+  height:1px;
+  background:var(--border);
+  max-width:80px;
+}
+
+.dialogue-text {
+  padding:10px 14px;
+  border-radius:0 3px 3px 3px;
+  font-size:15px;
+  line-height:1.7;
+  border:1px solid;
+  border-left:3px solid;
+  max-width:82%;
+  position:relative;
+}
+
+/* Izumi (player) */
+.izumi-block {
+  display:flex;
+  flex-direction:row-reverse;
+  margin-bottom:14px;
+}
+
+.izumi-inner {
+  max-width:70%;
+}
+
+.izumi-label {
+  font-family:'Share Tech Mono',monospace;
+  font-size:9px;
+  letter-spacing:2.5px;
+  color:var(--teal2);
+  text-align:right;
+  margin-bottom:4px;
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:8px;
+}
+
+.izumi-label::before {
+  content:'';
+  flex:1;
+  height:1px;
+  background:var(--border);
+  max-width:80px;
+}
+
+.izumi-bubble {
+  background:rgba(26,96,96,0.12);
+  border:1px solid rgba(34,136,136,0.3);
+  border-right:3px solid var(--teal2);
+  border-radius:3px 0 3px 3px;
+  padding:10px 14px;
+  font-size:15px;
+  line-height:1.7;
+  color:var(--text);
+  text-align:right;
+}
+
+/* Typing indicator */
+.typing-row {
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:8px 0;
+  animation:fadeUp .3s ease-out;
+}
+
+.typing-label {
+  font-family:'Share Tech Mono',monospace;
+  font-size:9px;
+  color:var(--text-dim);
+  letter-spacing:1.5px;
+}
+
+.typing-dots {
+  display:flex;
+  gap:4px;
+}
+
+.typing-dot {
+  width:5px; height:5px;
+  border-radius:50%;
+  background:var(--gold);
+  animation:tdot 1.2s ease-in-out infinite;
+}
+
+.typing-dot:nth-child(2) { animation-delay:.2s; }
+.typing-dot:nth-child(3) { animation-delay:.4s; }
+
+@keyframes tdot { 0%,100%{opacity:.2;transform:scale(.7)} 50%{opacity:1;transform:scale(1)} }
+
+/* ── COMBAT PANEL ── */
+.combat-panel {
+  margin:10px 26px;
+  padding:12px 14px;
+  background:rgba(100,10,10,0.12);
+  border:1px solid rgba(180,40,40,0.25);
+  border-top:2px solid rgba(200,50,50,0.5);
+  border-radius:0 0 3px 3px;
+  animation:fadeUp .3s ease-out;
+}
+
+.combat-label {
+  font-family:'Share Tech Mono',monospace;
+  font-size:9px;
+  letter-spacing:2px;
+  color:#cc6666;
+  text-transform:uppercase;
+  margin-bottom:8px;
+}
+
+.combat-moves {
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+}
+
+.move-btn {
+  padding:5px 12px;
+  background:transparent;
+  border:1px solid rgba(200,80,80,0.35);
+  border-radius:2px;
+  color:var(--parchment2);
+  font-family:'Share Tech Mono',monospace;
+  font-size:10px;
+  letter-spacing:1px;
+  cursor:pointer;
+  transition:all .2s;
+}
+
+.move-btn:hover {
+  background:rgba(200,80,80,0.1);
+  border-color:rgba(200,80,80,0.6);
+  color:#ffaaaa;
+}
+
+/* ── INPUT AREA ── */
+.input-zone {
+  padding:14px 20px;
+  background:rgba(8,6,4,0.95);
+  border-top:1px solid var(--border);
+  flex-shrink:0;
+  z-index:2;
+}
+
+.input-row {
+  display:flex;
+  gap:9px;
+  align-items:flex-end;
+}
+
+.input-wrap { flex:1; }
+
+.chat-textarea {
+  width:100%;
+  background:rgba(255,255,255,0.03);
+  border:1px solid var(--border);
+  border-radius:3px;
+  padding:10px 13px;
+  color:var(--text);
+  font-size:14px;
+  font-family:'Crimson Pro',serif;
+  font-weight:400;
+  resize:none;
+  max-height:110px;
+  line-height:1.5;
+  outline:none;
+  transition:border-color .2s, box-shadow .2s;
+}
+
+.chat-textarea:focus {
+  border-color:var(--gold2);
+  box-shadow:0 0 0 1px rgba(180,130,40,0.1);
+}
+
+.chat-textarea::placeholder { color:var(--text-dim); font-style:italic; }
+
+.send-btn {
+  height:42px;
+  padding:0 18px;
+  background:linear-gradient(135deg, var(--orange) 0%, #a03a06 100%);
+  border:none;
+  border-radius:3px;
+  color:#fff;
+  font-family:'Cinzel',serif;
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  cursor:pointer;
+  transition:all .2s;
+  flex-shrink:0;
+  white-space:nowrap;
+}
+
+.send-btn:hover:not(:disabled) {
+  transform:translateY(-1px);
+  box-shadow:0 4px 16px rgba(200,74,8,0.35);
+}
+
+.send-btn:disabled { opacity:.35; cursor:not-allowed; }
+
+.input-hint {
+  margin-top:6px;
+  font-family:'Share Tech Mono',monospace;
+  font-size:8px;
+  color:var(--text-dim);
+  letter-spacing:.5px;
+}
+
+/* Error block */
+.error-block {
+  padding:10px 14px;
+  background:rgba(120,20,20,0.15);
+  border:1px solid rgba(200,60,60,0.3);
+  border-left:3px solid #cc4444;
+  border-radius:0 3px 3px 0;
+  font-family:'Share Tech Mono',monospace;
+  font-size:11px;
+  color:#ff8888;
+  margin-bottom:14px;
+}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="logo">Izumi's <span>Chronicle</span></div>
+    <div class="header-divider"></div>
+    <div class="arc-label" id="arcLabel">Arc I — Team 7 Formation</div>
+    <div class="header-chars" id="headerChars"></div>
+  </header>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-body">
+
+      <!-- Player card -->
+      <div class="s-section">— Your Character</div>
+      <div class="player-card">
+        <div class="player-name-row">
+          <div class="player-name">Izumi</div>
+          <div class="player-rank">Genin · Team 7</div>
+        </div>
+        <div class="stat-row" id="statRows"></div>
+        <div class="affinity-row" id="affinityRow"></div>
+      </div>
+
+      <!-- Scene info -->
+      <div class="s-section">— Current Scene</div>
+      <div class="scene-card">
+        <div class="scene-card-label">Location</div>
+        <div class="scene-card-text" id="sceneLocation">Training bridge, Konoha — morning</div>
+      </div>
+
+      <!-- Roster -->
+      <div class="s-section" style="margin-top:6px;">— Roster</div>
+      <div id="rosterList"></div>
+
+    </div>
+
+    <!-- API key -->
+    <div class="api-wrap">
+      <label>Gemini API Key</label>
+      <input type="password" id="apiKey" placeholder="AIza..." />
+      <button onclick="applyKey()" style="width:100%;margin-top:6px;padding:6px;background:rgba(180,130,40,0.1);border:1px solid var(--gold2);border-radius:2px;color:var(--gold2);font-family:'Cinzel',serif;font-size:9px;letter-spacing:2px;cursor:pointer;text-transform:uppercase;">Apply Key</button>
+      <div class="hint">
+        Free at <a href="https://aistudio.google.com/app/apikey" target="_blank">aistudio.google.com</a><br>
+        Saved in your browser only.
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="scene-banner">
+      <div class="scene-title-main" id="sceneTitle">Team 7 — First Meeting</div>
+      <div class="scene-separator">·</div>
+      <div class="scene-beat-label" id="sceneBeat">The bridge. Kakashi is an hour late.</div>
+    </div>
+
+    <div class="messages" id="messages">
+      <div class="welcome" id="welcomeScreen">
+        <div class="welcome-glyph">🍃</div>
+        <h2>Izumi's Chronicle</h2>
+        <p>Team 7 has just been assigned.<br>The bridge. Morning light. Kakashi is late.<br>Naruto won't stop talking. Sasuke isn't listening.</p>
+        <button class="start-btn" id="startBtn" onclick="startStory()" disabled>Begin</button>
+      </div>
+    </div>
+
+    <div id="combatPanel" style="display:none"></div>
+
+    <div class="input-zone">
+      <div class="input-row">
+        <div class="input-wrap">
+          <textarea class="chat-textarea" id="chatInput"
+            placeholder="What does Izumi do or say..."
+            rows="1"></textarea>
+        </div>
+        <button class="send-btn" id="sendBtn" onclick="sendAction()" disabled>Act</button>
+      </div>
+      <div class="input-hint">Enter to act · Shift+Enter for new line · Your story, your pace</div>
+    </div>
+  </main>
+
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// WORLD STATE
+// ═══════════════════════════════════════════════════════════
+
+const PLAYER = {
+  name: 'Izumi',
+  rank: 'Genin',
+  team: 'Team 7',
+  background: 'Civilian-born prodigy. Wealthy family — never mentioned. Graduated top of the Academy on pure discipline. No clan, no kekkei genkai. Studies Minato Namikaze, Tobirama Senju, and Itachi Uchiha. Quiet, observant, dangerous in a way nobody has clocked yet.',
+  stats: {
+    taijutsu: 82,
+    ninjutsu: 75,
+    fuinjutsu: 78,
+    genjutsu: 38,
+    chakraCtrl: 80,
+  },
+  // All 5 affinities — Wind and Fire known, others surface through story
+  affinities: [
+    { name: 'Wind', symbol: '風', known: true, color: '#88ccaa' },
+    { name: 'Fire', symbol: '火', known: true, color: '#ee7744' },
+    { name: 'Lightning', symbol: '雷', known: false, color: '#bbbbff' },
+    { name: 'Water', symbol: '水', known: false, color: '#66aacc' },
+    { name: 'Earth', symbol: '土', known: false, color: '#aa8866' },
+  ],
+  // Only jutsu Izumi actually knows at story start
+  moves: [
+    { id: 'taijutsu_fast', label: 'Swift Strike', type: 'taijutsu', desc: 'Speed-focused taijutsu — Minato-influenced footwork and precision' },
+    { id: 'taijutsu_read', label: 'Read & Counter', type: 'taijutsu', desc: 'Observe the opponent\'s pattern, then counter cleanly' },
+    { id: 'wind_gale_palm', label: 'Gale Palm', type: 'ninjutsu', desc: 'Wind Release — a compressed burst of cutting wind chakra. Self-taught from theory.' },
+    { id: 'fire_fireball', label: 'Great Fireball', type: 'ninjutsu', desc: 'Fire Release — learned from the Hokage\'s scroll. Wind affinity amplifies it dangerously.' },
+    { id: 'fuinjutsu_bind', label: 'Binding Seal', type: 'fuinjutsu', desc: 'A restraining seal array — requires a moment of prep to place' },
+    { id: 'fuinjutsu_tag', label: 'Explosive Tag Array', type: 'fuinjutsu', desc: 'Pre-placed seal network detonated on command — her most reliable area technique' },
+    { id: 'substitution', label: 'Substitution', type: 'basic', desc: 'Academy basic — replace yourself with a nearby object' },
+    { id: 'transformation', label: 'Transformation', type: 'basic', desc: 'Academy basic — disguise as a person or object' },
+    { id: 'clone', label: 'Clone Jutsu', type: 'basic', desc: 'Academy basic — illusory clone, no substance' },
+    { id: 'observe', label: 'Observe & Wait', type: 'tactical', desc: 'Read the situation before committing. Izumi\'s default instinct.' },
+  ]
+};
+
+const CHARACTERS = {
+  kakashi: {
+    name: 'Kakashi Hatake',
+    role: 'Jonin-sensei · Team 7',
+    emoji: '👁️',
+    color: '#8899aa',
+    present: true,
+    reputation: 12, // 0-100 — starts at watchful neutrality
+    repLabel: 'Watchful',
+    persona: `You are Kakashi Hatake, jonin-sensei of Team 7. You are late to everything — deliberately. You've read Icha Icha Paradise more times than you can count. You lost your best friend Obito and your sensei Minato. That weight is always there, even if invisible.
+    
+Your assessment of this team: Naruto is loud and determined — you see Obito in him and it hurts. Sasuke is talented and cold — he'll self-destruct if not handled correctly. Izumi is the variable. Civilian-born, top of class — you've seen that combination before. It means either exceptional discipline or something you haven't categorized yet.
+
+Speech style: Deadpan. Minimal. You occasionally read your book mid-conversation. You smile with one eye, vaguely. Your assessments are always more precise than they sound.
+Phrases: "Hm.", "I see.", "Interesting.", "You're late." (even when *you* were late), "From now on, I'll be watching you closely."
+
+NEVER break character. React to Izumi based on her current reputation score with you.`
+  },
+  naruto: {
+    name: 'Naruto Uzumaki',
+    role: 'Genin · Team 7',
+    emoji: '🍥',
+    color: '#e07010',
+    present: true,
+    reputation: 20,
+    repLabel: 'Friendly',
+    persona: `You are Naruto Uzumaki. You are loud, relentless, and burning with a need to prove yourself. You carry the Nine-Tails and years of loneliness — nobody wanted to be near you, so you learned to be impossible to ignore. Your dream is to become Hokage. You mean it completely.
+
+You don't fully understand Izumi yet. She graduated top of the class which is annoying but fine. She's quiet in a way that makes you slightly uncomfortable — you can't read her. You're friendly by default because you know what it feels like to be written off.
+
+Speech style: Loud, enthusiastic, runs thoughts together, says "believe it!" or "dattebayo" occasionally. Wears feelings on sleeve. Short attention span unless something genuinely catches you.
+Phrases: "Believe it!", "I'm gonna be Hokage, you know!", "Hey wait—", "That's actually... kinda cool."
+
+NEVER break character. React to Izumi based on her current reputation score with you.`
+  },
+  sasuke: {
+    name: 'Sasuke Uchiha',
+    role: 'Genin · Team 7',
+    emoji: '🌑',
+    color: '#8877dd',
+    present: true,
+    reputation: 5,
+    repLabel: 'Dismissive',
+    persona: `You are Sasuke Uchiha. The last loyal Uchiha. You carry the massacre of your clan — your brother Itachi did it, spared you, and told you to hate him and grow strong. That is your entire world. You are here to get stronger, not to make friends.
+
+You have assessed Izumi and filed her under "irrelevant" — civilian-born, no clan, no Sharingan, no visible reason to matter. You are civil but cold. If she does something that contradicts your assessment, you'll notice and you won't like that you noticed.
+
+Speech style: Terse. You speak in short sentences. You don't explain yourself. You don't ask questions unless tactically necessary. Silence is your default.
+Phrases: "Hn.", "Don't get in my way.", "That technique is inefficient.", "..." (you sometimes just don't respond)
+
+NEVER break character. You start deeply dismissive of Izumi. Let her prove otherwise — slowly, grudgingly.`
+  }
+};
+
+// World / game state
+let state = {
+  arc: 'I',
+  arcName: 'Team 7 Formation',
+  scene: 'Team 7 — First Meeting',
+  sceneBeat: 'The bridge. Kakashi is an hour late.',
+  sceneLocation: 'Training bridge, Konoha — morning',
+  turnCount: 0,
+  inCombat: false,
+  combatOpponent: null,
+  history: [],
+  eventLog: [],
+  characters: JSON.parse(JSON.stringify(CHARACTERS)),
+  // Arc progression
+  arcPhase: 'bridge_meeting', // tracks where we are within an arc
+  hokageSceneTriggered: false,
+  hokageSceneDone: false,
+  // Timeskip system
+  pendingTimeskip: false,
+  timeskipData: null,
+};
+
+// ═══════════════════════════════════════════════════════════
+// PERSISTENCE
+// ═══════════════════════════════════════════════════════════
+
+function saveState() {
+  try {
+    localStorage.setItem('izumi_state_v3', JSON.stringify(state));
+  } catch(e) {}
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem('izumi_state_v3');
+    if (raw) {
+      const saved = JSON.parse(raw);
+      state = saved;
+      return true;
+    }
+  } catch(e) {}
+  return false;
+}
+
+
+// ═══════════════════════════════════════════════════════════
+// SYSTEM PROMPT BUILDER
+// ═══════════════════════════════════════════════════════════
+
+
+function buildSystemPrompt() {
+  const chars = state.characters;
+  const knownAffinities = PLAYER.affinities.filter(a => a.known).map(a => a.name).join(', ');
+
+  const ARC_CONTEXT = {
+    'I': `Arc I — Team 7 Formation. Phases in order: bridge_meeting → bell_test → d_rank_missions → hokage_scroll_scene → arc_end.
+Current phase: ${state.arcPhase}.
+The Hokage scroll scene (hokage_scroll_scene) triggers automatically after the first D-rank mission completes. Izumi goes alone to see the Third Hokage, Hiruzen Sarutobi, and receives limited access to the Scroll of Seals — explaining her fūinjutsu depth. Nobody on the team knows. This scene should feel earned and quiet, not dramatic.
+Arc I ends when the team has completed a few D-ranks and had meaningful character interactions. At arc end, output [ARC_COMPLETE] and describe that time has passed.`,
+    'II': `Arc II — Chunin Exams. Phases: exam_registration → forest_of_death → tower → prelims → finals.
+Current phase: ${state.arcPhase}.
+Arc II ends after the finals. Output [ARC_COMPLETE] at natural conclusion.`,
+    'III': `Arc III — Sasuke Retrieval. Phases: invasion_aftermath → sasuke_leaves → pursuit → confrontation.
+Current phase: ${state.arcPhase}.`,
+  };
+
+  return `You are the Dungeon Master, narrator, and all NPCs in Izumi's Chronicle — a Naruto roleplay RPG.
+
+═══ CRITICAL RULE: INPUT EXPANSION ═══
+The player's inputs will often be SHORT — a fragment, an intent, a single word. Your job is to EXPAND these into a full cinematic moment. You are the author. Take Izumi's brief action and write it with body language, atmosphere, the weight of the moment. If the player types "stay quiet and watch", you write the full scene of what that silence looks like, how it lands, what the characters around her register. Never write a thin response because the input was thin.
+
+═══ IZUMI (PLAYER CHARACTER) ═══
+Background: Civilian-born prodigy. Wealthy family — never mentioned, deflected if asked. Graduated top of the Academy on pure discipline and self-study. No clan, no kekkei genkai. Privately idolizes Minato Namikaze (proof civilian-born can reach the top), Tobirama Senju (fūinjutsu master, architect), and Itachi Uchiha (carries burdens quietly — she finds this honourable, not tragic).
+Personality: Quiet. Observant. Economical with words and movement. Never explains herself unless it matters. Three moves ahead. The team reads this as passivity. It isn't.
+
+Known jutsu (ONLY these — she has no others yet):
+- Academy basics: Substitution, Transformation, Clone (illusory only, no substance)
+- Wind Release: Gale Palm — self-taught from theory and pure chakra intuition
+- Fire Release: Great Fireball Jutsu — learned from the Third Hokage's scroll (Arc I, hokage_scroll_scene)
+- Fūinjutsu: Binding Seal array, Explosive Tag construction and arrays — her deepest self-study
+
+IMPORTANT: Izumi does NOT know Shadow Clone, Rasengan, or any advanced jutsu yet. If she attempts something outside this list, it fails or is rough and unrefined. She figures things out in the field — that's part of her arc.
+
+Stats: Taijutsu 82/100 (Minato-influenced speed, precision over brute force), Ninjutsu 75/100, Fūinjutsu 78/100 (unusual depth for a genin), Genjutsu 38/100 (can recognize and break it; casting is unreliable).
+Known affinities: ${knownAffinities}. Wind amplifies Fire — she knows this instinctively and it is her signature combination. All 5 affinities exist but the others surface through story. DO NOT reveal hidden affinities unless a specific story moment demands it.
+
+═══ NPCs ═══
+${Object.entries(chars).filter(([,c]) => c.present).map(([id, c]) => `
+${c.name} | Reputation: ${c.reputation}/100 — "${c.repLabel}"
+${c.persona}
+`).join('\n')}
+
+═══ ARC & SCENE ═══
+${ARC_CONTEXT[state.arc] || ''}
+Current scene: ${state.scene}
+Beat: ${state.sceneBeat}
+Location: ${state.sceneLocation}
+Turn: ${state.turnCount}
+
+═══ SASUKE BEHAVIOUR NOTE ═══
+At rep 5/100, Sasuke does not speak to Izumi unless absolutely forced to. His reactions are physical — a glance, a shift of posture, a dismissive exhale. Silence is his most common response. Do NOT write him giving dialogue unless the moment demands it. Let the silence be characterization.
+
+═══ SCENE MOMENTUM ═══
+Every turn must advance the story. Even quiet turns should shift something — the mood, the dynamic, the characters' internal assessment of Izumi. Do not repeat beats. Do not stall.
+
+═══ RESPONSE FORMAT ═══
+Always structure responses exactly like this:
+
+[SCENE]
+2-4 sentences. Atmospheric, present tense, sensory. Expand Izumi's action cinematically here if the input was short.
+
+[CHARACTER RESPONSES]
+Only characters who would naturally react. Sasuke reacts physically/silently unless rep warrants speech.
+KAKASHI: ...
+NARUTO: ...
+SASUKE: ... (or write "SASUKE: —" for a silence beat)
+
+[REPUTATION_UPDATE]
+{"kakashi": N, "naruto": N, "sasuke": N}
+(N = integer delta, can be 0. Keep changes between -5 and +8.)
+
+[COMBAT: YES/NO]
+If YES, list contextually appropriate moves:
+MOVE|Label|Short description
+MOVE|Label|Short description
+
+[SCENE_UPDATE]
+{"scene": "...", "beat": "...", "location": "..."}
+
+[ARC_TRIGGER: NONE/HOKAGE_SCENE/ARC_COMPLETE/TIMESKIP]
+NONE — story continues normally
+HOKAGE_SCENE — trigger the Hokage scroll scene now (only once, after first D-rank)
+ARC_COMPLETE — this arc has reached its natural end, prepare for next arc
+TIMESKIP|"Brief description of what time passes and what changes" — requires player permission before executing`;
+}
+}
+
+// ═══════════════════════════════════════════════════════════
+// GEMINI API
+// ═══════════════════════════════════════════════════════════
+
+async function callGemini(userAction) {
+  const key = getAPIKey();
+  if (!key) throw new Error('No API key set.');
+
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`;
+
+  // Keep last 20 turns of history for context
+  const recentHistory = state.history.slice(-20);
+
+  const contents = [
+    ...recentHistory,
+    { role: 'user', parts: [{ text: userAction }] }
+  ];
+
+  const body = {
+    system_instruction: { parts: [{ text: buildSystemPrompt() }] },
+    contents,
+    generationConfig: {
+      temperature: 0.82,
+      topK: 40,
+      topP: 0.92,
+      maxOutputTokens: 900,
+    }
+  };
+
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message || `API error ${res.status}`);
+  }
+
+  const data = await res.json();
+  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!text) throw new Error('Empty response from Gemini.');
+  return text;
+}
+
+// ═══════════════════════════════════════════════════════════
+// RESPONSE PARSER
+// ═══════════════════════════════════════════════════════════
+
+function parseResponse(raw) {
+  const result = {
+    scene: '',
+    dialogues: [],
+    repUpdates: {},
+    combat: false,
+    combatMoves: [],
+    sceneUpdate: null,
+    arcTrigger: 'NONE',
+    timeskipDesc: '',
+  };
+
+  // Extract [SCENE]
+  const sceneMatch = raw.match(/\[SCENE\]([\s\S]*?)(?=\[CHARACTER|\[REPUTATION|\[COMBAT|\[SCENE_UPDATE|\[ARC_TRIGGER|$)/i);
+  if (sceneMatch) result.scene = sceneMatch[1].trim();
+
+  // Extract [CHARACTER RESPONSES]
+  const charMatch = raw.match(/\[CHARACTER RESPONSES?\]([\s\S]*?)(?=\[REPUTATION|\[COMBAT|\[SCENE_UPDATE|\[ARC_TRIGGER|$)/i);
+  if (charMatch) {
+    const block = charMatch[1];
+    const lines = block.split('\n').filter(l => l.trim());
+    let current = null;
+    for (const line of lines) {
+      const speakerMatch = line.match(/^(KAKASHI|NARUTO|SASUKE):\s*(.*)/i);
+      if (speakerMatch) {
+        if (current) result.dialogues.push(current);
+        const text = speakerMatch[2].trim();
+        // Don't add empty/silence markers as real dialogue
+        if (text && text !== '—' && text !== '...') {
+          current = { speaker: speakerMatch[1].toUpperCase(), text };
+        } else if (text === '—' || text === '...') {
+          // Sasuke silence — push as a silence entry
+          current = { speaker: speakerMatch[1].toUpperCase(), text, silence: true };
+        } else {
+          current = null;
+        }
+      } else if (current && line.trim()) {
+        current.text += ' ' + line.trim();
+      }
+    }
+    if (current) result.dialogues.push(current);
+  }
+
+  // Extract [REPUTATION_UPDATE]
+  const repMatch = raw.match(/\[REPUTATION_UPDATE\]([\s\S]*?)(?=\[COMBAT|\[SCENE_UPDATE|\[ARC_TRIGGER|$)/i);
+  if (repMatch) {
+    const jsonStr = repMatch[1].trim().match(/\{[\s\S]*?\}/);
+    if (jsonStr) {
+      try { result.repUpdates = JSON.parse(jsonStr[0]); } catch(e) {}
+    }
+  }
+
+  // Extract [COMBAT]
+  const combatMatch = raw.match(/\[COMBAT:\s*(YES|NO)\]([\s\S]*?)(?=\[SCENE_UPDATE|\[ARC_TRIGGER|$)/i);
+  if (combatMatch) {
+    result.combat = combatMatch[1].toUpperCase() === 'YES';
+    if (result.combat) {
+      const moveLines = combatMatch[2].trim().split('\n').filter(l => l.startsWith('MOVE|'));
+      result.combatMoves = moveLines.map(l => {
+        const parts = l.split('|');
+        return { id: parts[1], label: parts[1], desc: parts[2] || '' };
+      });
+    }
+  }
+
+  // Extract [SCENE_UPDATE]
+  const sceneUpdMatch = raw.match(/\[SCENE_UPDATE\]([\s\S]*?)(?=\[ARC_TRIGGER|$)/i);
+  if (sceneUpdMatch) {
+    const jsonStr = sceneUpdMatch[1].trim().match(/\{[\s\S]*?\}/);
+    if (jsonStr) {
+      try { result.sceneUpdate = JSON.parse(jsonStr[0]); } catch(e) {}
+    }
+  }
+
+  // Extract [ARC_TRIGGER]
+  const arcMatch = raw.match(/\[ARC_TRIGGER:\s*([^\]]*)\]/i);
+  if (arcMatch) {
+    const val = arcMatch[1].trim();
+    if (val.startsWith('TIMESKIP|')) {
+      result.arcTrigger = 'TIMESKIP';
+      result.timeskipDesc = val.replace('TIMESKIP|', '').replace(/^"|"$/g, '');
+    } else {
+      result.arcTrigger = val.toUpperCase();
+    }
+  }
+
+  return result;
+}
+
+// ═══════════════════════════════════════════════════════════
+// APPLY UPDATES TO STATE
+// ═══════════════════════════════════════════════════════════
+
+function applyRepUpdates(updates) {
+  for (const [charId, delta] of Object.entries(updates)) {
+    if (state.characters[charId] && delta !== 0) {
+      state.characters[charId].reputation = Math.max(0, Math.min(100,
+        state.characters[charId].reputation + delta));
+      updateRepLabel(charId);
+    }
+  }
+}
+
+function handleArcTrigger(trigger, timeskipDesc) {
+  if (trigger === 'NONE' || !trigger) return;
+
+  if (trigger === 'HOKAGE_SCENE' && !state.hokageSceneTriggered) {
+    state.hokageSceneTriggered = true;
+    state.arcPhase = 'hokage_scroll_scene';
+    // Inject a narrative marker
+    state.eventLog.push({
+      type: 'arc_marker',
+      text: '— Izumi slips away from the team. The Hokage tower, late afternoon. —'
+    });
+  }
+
+  if (trigger === 'HOKAGE_SCENE' && state.hokageSceneTriggered && !state.hokageSceneDone) {
+    state.hokageSceneDone = true;
+    state.arcPhase = 'd_rank_missions';
+  }
+
+  if (trigger === 'ARC_COMPLETE') {
+    const nextArc = { 'I': 'II', 'II': 'III', 'III': 'IV' };
+    const nextArcNames = { 'II': 'Chunin Exams', 'III': 'Sasuke Retrieval', 'IV': 'Shippuden' };
+    const next = nextArc[state.arc];
+    if (next) {
+      state.eventLog.push({
+        type: 'arc_marker',
+        text: `═══ Arc ${state.arc} Complete ═══`
+      });
+      state.arc = next;
+      state.arcName = nextArcNames[next] || 'New Arc';
+      state.arcPhase = 'start';
+      document.getElementById('arcLabel').textContent = `Arc ${state.arc} — ${state.arcName}`;
+    }
+  }
+
+  if (trigger === 'TIMESKIP' && timeskipDesc) {
+    state.pendingTimeskip = true;
+    state.timeskipData = timeskipDesc;
+    showTimeskipPrompt(timeskipDesc);
+  }
+}
+
+function showTimeskipPrompt(desc) {
+  // Show a UI card asking player to approve the time skip
+  const container = document.getElementById('messages');
+  const div = document.createElement('div');
+  div.id = 'timeskipPrompt';
+  div.style.cssText = `
+    margin:16px 0;
+    padding:14px 18px;
+    background:rgba(180,130,40,0.07);
+    border:1px solid rgba(180,130,40,0.35);
+    border-top:2px solid var(--gold2);
+    border-radius:0 0 3px 3px;
+    animation:fadeUp .3s ease-out;
+  `;
+  div.innerHTML = `
+    <div style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--gold2);text-transform:uppercase;margin-bottom:8px;">⏳ Time Skip Ahead</div>
+    <div style="font-size:14px;color:var(--parchment2);line-height:1.6;margin-bottom:12px;font-style:italic;">${escHtml(desc)}</div>
+    <div style="display:flex;gap:8px;">
+      <button onclick="confirmTimeskip()" style="padding:6px 16px;background:rgba(180,130,40,0.12);border:1px solid var(--gold2);border-radius:2px;color:var(--gold2);font-family:'Cinzel',serif;font-size:10px;letter-spacing:2px;cursor:pointer;">Continue →</button>
+      <button onclick="cancelTimeskip()" style="padding:6px 16px;background:transparent;border:1px solid rgba(255,255,255,0.1);border-radius:2px;color:var(--text-dim);font-family:'Cinzel',serif;font-size:10px;letter-spacing:1px;cursor:pointer;">Stay Here</button>
+    </div>
+  `;
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+}
+
+async function confirmTimeskip() {
+  const prompt = document.getElementById('timeskipPrompt');
+  if (prompt) prompt.remove();
+  state.pendingTimeskip = false;
+
+  state.eventLog.push({ type: 'arc_marker', text: `— ${state.timeskipData} —` });
+  state.timeskipData = null;
+  saveState();
+
+  // Tell the AI the timeskip was accepted and continue
+  await sendActionRaw(`[TIMESKIP ACCEPTED] The time skip happens. Continue the story from the new point in time.`, '— Time passes —');
+}
+
+function cancelTimeskip() {
+  const prompt = document.getElementById('timeskipPrompt');
+  if (prompt) prompt.remove();
+  state.pendingTimeskip = false;
+  state.timeskipData = null;
+  saveState();
+}
+
+function updateRepLabel(charId) {
+  const rep = state.characters[charId].reputation;
+  let label;
+  if (charId === 'sasuke') {
+    if (rep < 15) label = 'Dismissive';
+    else if (rep < 30) label = 'Aware';
+    else if (rep < 50) label = 'Grudging';
+    else if (rep < 70) label = 'Respects';
+    else label = 'Rival';
+  } else if (charId === 'kakashi') {
+    if (rep < 20) label = 'Watchful';
+    else if (rep < 40) label = 'Curious';
+    else if (rep < 60) label = 'Impressed';
+    else if (rep < 80) label = 'Trusts';
+    else label = 'Mentor';
+  } else {
+    if (rep < 25) label = 'Friendly';
+    else if (rep < 50) label = 'Good Friend';
+    else if (rep < 75) label = 'Close';
+    else label = 'Like Brothers';
+  }
+  state.characters[charId].repLabel = label;
+}
+
+// ═══════════════════════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════════════════════
+
+const CHAR_COLORS = {
+  KAKASHI: '#8899aa',
+  NARUTO: '#e07010',
+  SASUKE: '#8877dd',
+};
+
+const CHAR_EMOJIS = { KAKASHI: '👁️', NARUTO: '🍥', SASUKE: '🌑' };
+
+function renderAll() {
+  renderStats();
+  renderAffinities();
+  renderRoster();
+  renderHeaderChars();
+  renderSceneBanner();
+  renderMessages();
+  renderCombat();
+}
+
+function renderStats() {
+  const container = document.getElementById('statRows');
+  const stats = [
+    { name: 'Taijutsu', val: PLAYER.stats.taijutsu, color: '#cc8844' },
+    { name: 'Ninjutsu', val: PLAYER.stats.ninjutsu, color: '#6688cc' },
+    { name: 'Fūinjutsu', val: PLAYER.stats.fuinjutsu, color: '#88aacc' },
+    { name: 'Genjutsu', val: PLAYER.stats.genjutsu, color: '#aa66cc' },
+    { name: 'Chakra Ctrl', val: PLAYER.stats.chakraCtrl, color: '#66ccaa' },
+  ];
+  container.innerHTML = stats.map(s => `
+    <div class="stat">
+      <div class="stat-name">${s.name}</div>
+      <div class="stat-bar"><div class="stat-fill" style="width:${s.val}%;background:${s.color}"></div></div>
+      <div class="stat-val">${s.val}</div>
+    </div>
+  `).join('');
+}
+
+function renderAffinities() {
+  const container = document.getElementById('affinityRow');
+  container.innerHTML = PLAYER.affinities.map(a => `
+    <div class="affinity-tag ${a.known ? '' : 'hidden'}"
+         style="border-color:${a.known ? a.color : 'rgba(255,255,255,0.1)'};color:${a.known ? a.color : 'var(--text-dim)'}">
+      ${a.symbol} ${a.name}
+    </div>
+  `).join('');
+}
+
+function renderRoster() {
+  const container = document.getElementById('rosterList');
+  container.innerHTML = Object.entries(state.characters).map(([id, c]) => `
+    <div class="char-entry ${c.present ? 'present' : 'absent'}"
+         style="--char-c:${c.color}">
+      <div class="char-emoji" style="border-color:${c.present ? c.color : 'rgba(255,255,255,0.1)'}">
+        ${c.emoji}
+      </div>
+      <div class="char-details">
+        <div class="char-dname">${c.name}</div>
+        <div class="char-drole">${c.role}</div>
+        <div class="rep-row">
+          <div class="rep-label">${c.repLabel}</div>
+          <div class="rep-bar">
+            <div class="rep-fill" style="width:${c.reputation}%;background:${c.color}"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderHeaderChars() {
+  const container = document.getElementById('headerChars');
+  container.innerHTML = Object.entries(state.characters).map(([id, c]) => `
+    <div class="hchar ${c.present ? 'present' : 'absent'}"
+         style="border-color:${c.present ? c.color + '55' : 'rgba(255,255,255,0.08)'};color:${c.color}">
+      <div class="hchar-dot"></div>
+      ${c.name.split(' ')[0]}
+    </div>
+  `).join('');
+}
+
+function renderSceneBanner() {
+  document.getElementById('sceneTitle').textContent = state.scene;
+  document.getElementById('sceneBeat').textContent = state.sceneBeat;
+  document.getElementById('sceneLocation').textContent = state.sceneLocation;
+}
+
+function renderMessages() {
+  const container = document.getElementById('messages');
+
+  if (state.eventLog.length === 0) {
+    const hasKey = !!getAPIKey();
+    container.innerHTML = `
+      <div class="welcome" id="welcomeScreen">
+        <div class="welcome-glyph">🍃</div>
+        <h2>Izumi's Chronicle</h2>
+        <p>Team 7 has just been assigned.<br>The bridge. Morning light. Kakashi is late.<br>Naruto won't stop talking. Sasuke isn't listening.</p>
+        <button class="start-btn" id="startBtn" onclick="startStory()" ${hasKey ? '' : 'disabled'}>Begin</button>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = state.eventLog.map(entry => {
+    if (entry.type === 'narrator') {
+      return `<div class="msg-block"><div class="narrator-block"><div class="narrator-text">${entry.text}</div></div></div>`;
+    }
+    if (entry.type === 'arc_marker') {
+      return `<div class="msg-block" style="text-align:center;padding:6px 0 12px;">
+        <span style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--gold);opacity:.7;">${entry.text}</span>
+      </div>`;
+    }
+    if (entry.type === 'dialogue') {
+      const color = CHAR_COLORS[entry.speaker] || '#aaa';
+      const emoji = CHAR_EMOJIS[entry.speaker] || '?';
+      if (entry.silence) {
+        // Render a silence beat — no bubble, just the character name and an em dash
+        return `<div class="msg-block dialogue-block">
+          <div class="dialogue-speaker" style="color:${color};opacity:.45">${emoji} ${entry.speaker} <span style="font-style:italic;letter-spacing:1px;">— says nothing</span></div>
+        </div>`;
+      }
+      return `<div class="msg-block dialogue-block">
+        <div class="dialogue-speaker" style="color:${color}">${emoji} ${entry.speaker}</div>
+        <div class="dialogue-text" style="border-color:${color}44;border-left-color:${color};background:${color}08;color:var(--text)">
+          ${entry.text}
+        </div>
+      </div>`;
+    }
+    if (entry.type === 'player') {
+      return `<div class="msg-block izumi-block">
+        <div class="izumi-inner">
+          <div class="izumi-label">✦ IZUMI</div>
+          <div class="izumi-bubble">${entry.text}</div>
+        </div>
+      </div>`;
+    }
+    if (entry.type === 'error') {
+      return `<div class="msg-block"><div class="error-block">⚠ ${entry.text}</div></div>`;
+    }
+    return '';
+  }).join('');
+
+  container.scrollTop = container.scrollHeight;
+}
+
+function showTyping() {
+  const container = document.getElementById('messages');
+  const div = document.createElement('div');
+  div.id = 'typingRow';
+  div.className = 'typing-row';
+  div.innerHTML = `
+    <div class="typing-label">The scene unfolds</div>
+    <div class="typing-dots">
+      <div class="typing-dot"></div>
+      <div class="typing-dot"></div>
+      <div class="typing-dot"></div>
+    </div>`;
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+}
+
+function hideTyping() {
+  const el = document.getElementById('typingRow');
+  if (el) el.remove();
+}
+
+function renderCombat() {
+  const panel = document.getElementById('combatPanel');
+  if (!state.inCombat || !state.combatMoves?.length) {
+    panel.style.display = 'none';
+    return;
+  }
+  panel.style.display = 'block';
+  panel.innerHTML = `
+    <div class="combat-panel">
+      <div class="combat-label">⚔ Combat — Choose your move</div>
+      <div class="combat-moves">
+        ${state.combatMoves.map(m => `
+          <button class="move-btn" onclick="useCombatMove('${m.id}', '${escHtml(m.label)}', '${escHtml(m.desc)}')"
+                  title="${escHtml(m.desc)}">
+            ${m.label}
+          </button>
+        `).join('')}
+      </div>
+    </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════
+// ACTIONS
+// ═══════════════════════════════════════════════════════════
+
+let loading = false;
+
+async function startStory() {
+  const btn = document.getElementById('startBtn');
+  if (btn) btn.disabled = true;
+  loading = true;
+  updateSendBtn();
+
+  const welcomeEl = document.getElementById('welcomeScreen');
+  if (welcomeEl) welcomeEl.remove();
+
+  showTyping();
+
+  try {
+    const openingPrompt = `The story begins. It is morning at the bridge in Konoha. Kakashi Hatake is one hour late. Naruto Uzumaki has been waiting and complaining loudly. Sasuke Uchiha is leaning against the railing, arms crossed, saying nothing. Izumi has been here since before any of them. She arrived early and has been watching the water move under the bridge. Set the opening scene and have Naruto and Sasuke react to each other and Izumi's quiet presence — neither has spoken to her yet.`;
+
+    const raw = await callGemini(openingPrompt);
+    const parsed = parseResponse(raw);
+
+    state.history.push({ role: 'user', parts: [{ text: openingPrompt }] });
+    state.history.push({ role: 'model', parts: [{ text: raw }] });
+
+    if (parsed.scene) state.eventLog.push({ type: 'narrator', text: parsed.scene });
+    for (const d of parsed.dialogues) {
+      state.eventLog.push({ type: 'dialogue', speaker: d.speaker, text: d.text, silence: d.silence });
+    }
+    if (parsed.repUpdates) applyRepUpdates(parsed.repUpdates);
+    if (parsed.sceneUpdate) {
+      if (parsed.sceneUpdate.scene) state.scene = parsed.sceneUpdate.scene;
+      if (parsed.sceneUpdate.beat) state.sceneBeat = parsed.sceneUpdate.beat;
+      if (parsed.sceneUpdate.location) state.sceneLocation = parsed.sceneUpdate.location;
+    }
+    if (parsed.combat && parsed.combatMoves?.length) {
+      state.inCombat = true;
+      state.combatMoves = parsed.combatMoves;
+    }
+    if (parsed.arcTrigger && parsed.arcTrigger !== 'NONE') {
+      handleArcTrigger(parsed.arcTrigger, parsed.timeskipDesc);
+    }
+
+    state.turnCount++;
+    saveState();
+  } catch(e) {
+    state.eventLog.push({ type: 'error', text: e.message });
+  }
+
+  hideTyping();
+  loading = false;
+  updateSendBtn();
+  renderAll();
+}
+
+async function sendAction() {
+  if (loading) return;
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim();
+  if (!text) return;
+
+  input.value = '';
+  input.style.height = 'auto';
+
+  state.eventLog.push({ type: 'player', text: escHtml(text) });
+  renderMessages();
+  showTyping();
+  loading = true;
+  updateSendBtn();
+
+  try {
+    const raw = await callGemini(text);
+    const parsed = parseResponse(raw);
+
+    state.history.push({ role: 'user', parts: [{ text }] });
+    state.history.push({ role: 'model', parts: [{ text: raw }] });
+
+    if (parsed.scene) state.eventLog.push({ type: 'narrator', text: parsed.scene });
+    for (const d of parsed.dialogues) {
+      state.eventLog.push({ type: 'dialogue', speaker: d.speaker, text: d.text, silence: d.silence });
+    }
+      state.combatMoves = parsed.combatMoves;
+    } else {
+      state.combatMoves = [];
+    }
+
+    if (parsed.arcTrigger && parsed.arcTrigger !== 'NONE') {
+      handleArcTrigger(parsed.arcTrigger, parsed.timeskipDesc);
+    }
+
+    state.turnCount++;
+    saveState();
+  } catch(e) {
+    state.eventLog.push({ type: 'error', text: e.message });
+  }
+
+  hideTyping();
+  loading = false;
+  updateSendBtn();
+  renderAll();
+}
+
+async function useCombatMove(id, label, desc) {
+  if (loading) return;
+  const action = `[COMBAT MOVE: ${label}] Izumi uses ${label} — ${desc}`;
+  document.getElementById('chatInput').value = '';
+  await sendActionRaw(action, `⚔ ${label}`);
+}
+
+async function sendActionRaw(apiText, displayText) {
+  state.eventLog.push({ type: 'player', text: escHtml(displayText) });
+  renderMessages();
+  showTyping();
+  loading = true;
+  updateSendBtn();
+
+  try {
+    const raw = await callGemini(apiText);
+    const parsed = parseResponse(raw);
+
+    state.history.push({ role: 'user', parts: [{ text: apiText }] });
+    state.history.push({ role: 'model', parts: [{ text: raw }] });
+
+    if (parsed.scene) state.eventLog.push({ type: 'narrator', text: parsed.scene });
+    for (const d of parsed.dialogues) {
+      state.eventLog.push({ type: 'dialogue', speaker: d.speaker, text: d.text, silence: d.silence });
+    }
+    if (parsed.repUpdates) applyRepUpdates(parsed.repUpdates);
+    if (parsed.sceneUpdate) {
+      if (parsed.sceneUpdate.scene) state.scene = parsed.sceneUpdate.scene;
+      if (parsed.sceneUpdate.beat) state.sceneBeat = parsed.sceneUpdate.beat;
+      if (parsed.sceneUpdate.location) state.sceneLocation = parsed.sceneUpdate.location;
+    }
+    state.inCombat = parsed.combat;
+    state.combatMoves = parsed.combat && parsed.combatMoves?.length ? parsed.combatMoves : [];
+
+    if (parsed.arcTrigger && parsed.arcTrigger !== 'NONE') {
+      handleArcTrigger(parsed.arcTrigger, parsed.timeskipDesc);
+    }
+
+    state.turnCount++;
+    saveState();
+  } catch(e) {
+    state.eventLog.push({ type: 'error', text: e.message });
+  }
+
+  hideTyping();
+  loading = false;
+  updateSendBtn();
+  renderAll();
+}
+
+function updateSendBtn() {
+  const btn = document.getElementById('sendBtn');
+  const startBtn = document.getElementById('startBtn');
+  const hasKey = !!getAPIKey();
+  btn.disabled = loading || !hasKey || state.eventLog.length === 0;
+  if (startBtn) startBtn.disabled = !hasKey || loading;
+}
+
+function getAPIKey() {
+  const fieldVal = document.getElementById('apiKey').value.trim();
+  return fieldVal || localStorage.getItem('izumi_apikey') || '';
+}
+
+function applyKey() {
+  const val = document.getElementById('apiKey').value.trim();
+  if (!val) { alert('Please paste your API key first.'); return; }
+  localStorage.setItem('izumi_apikey', val);
+  updateSendBtn();
+  const sb = document.getElementById('startBtn');
+  if (sb) { sb.disabled = false; }
+  // Visual feedback
+  const btn = document.querySelector('button[onclick="applyKey()"]');
+  if (btn) { btn.textContent = '✓ Key Saved'; setTimeout(() => { btn.textContent = 'Apply Key'; }, 1500); }
+}
+
+// ═══════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════
+
+function init() {
+  // Always restore saved key into the field first
+  const savedKey = localStorage.getItem('izumi_apikey') || '';
+  if (savedKey) document.getElementById('apiKey').value = savedKey;
+
+  // Load saved game state
+  loadState();
+
+  // Key field — cover all event types
+  const keyField = document.getElementById('apiKey');
+  const onKeyChange = () => {
+    const val = keyField.value.trim();
+    if (val) {
+      localStorage.setItem('izumi_apikey', val);
+      updateSendBtn();
+      const sb = document.getElementById('startBtn');
+      if (sb) sb.disabled = false;
+    }
+  };
+  keyField.addEventListener('input', onKeyChange);
+  keyField.addEventListener('change', onKeyChange);
+  keyField.addEventListener('keyup', onKeyChange);
+  keyField.addEventListener('paste', () => setTimeout(onKeyChange, 100));
+
+  // Textarea
+  const ta = document.getElementById('chatInput');
+  ta.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendAction(); }
+  });
+  ta.addEventListener('input', () => {
+    ta.style.height = 'auto';
+    ta.style.height = Math.min(ta.scrollHeight, 110) + 'px';
+  });
+
+  renderAll();
+  updateSendBtn();
+}
+
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+
+init();
+</script>
+</body>
+</html>
